@@ -62,4 +62,36 @@ While building the Customer Management System, I practiced:
 3. Make sure Python is installed.
 4. Run the program:
 
+## REST API
 
+This project also includes a Flask REST API connected to the SQLite customer database.
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /customers | Get all customers |
+| GET | /customers/<id> | Get one customer |
+| POST | /customers | Add a new customer |
+| PUT | /customers/<id> | Update a customer |
+| DELETE | /customers/<id> | Delete a customer |
+
+### API Features
+
+- JSON request and response data
+- SQLite database integration
+- Full CRUD operations
+- Input validation
+- 400 Bad Request responses for invalid data
+- 404 Not Found responses for missing customers
+
+### Run the API
+
+Install Flask:
+
+```bash
+pip install flask
+
+The API runs locally at:
+
+http://127.0.0.1:5000
