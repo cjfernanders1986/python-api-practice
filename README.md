@@ -95,3 +95,37 @@ pip install flask
 The API runs locally at:
 
 http://127.0.0.1:5000
+
+## External API Practice
+
+This project also includes Python scripts that practice consuming external REST APIs using the `requests` library.
+
+### GitHub API
+
+The GitHub API scripts can:
+
+- Look up a GitHub user
+- Retrieve public repositories
+- Display repository names and languages
+- Count repositories by programming language
+- Handle 404 responses
+- Handle connection errors and timeouts
+- Process JSON responses
+- Use functions and return values
+
+### Other API Practice
+
+Additional scripts demonstrate:
+
+- Sending HTTP GET requests
+- Reading JSON responses
+- Working with nested JSON data
+- Checking HTTP status codes
+- Querying the REST Countries API
+
+### Example
+
+Run the GitHub repository analyzer:
+
+```bash
+python github_repos.py
