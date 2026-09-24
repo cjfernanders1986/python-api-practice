@@ -168,12 +168,47 @@ def delete_customer(customer_id):
         "message": "Customer not found"
     }, 404
 
-@app.route("/github/<username>")
-def github_summary(username):
+def count_languages(repos):
+    language_counts = {}
+
+    for repo in repos:
+        language = repo["language"] or "Unknown"
+
+        if language in language_counts:
+            language_counts[language] += 1
+        else:
+            language_counts[language] = 1
+
+    return language_counts
+
+
+
+def get_github_repositories(username):
     url = f"https://api.github.com/users/{username}/repos?per_page=100"
 
+    response = requests.get(url, timeout=10)
+
+    return response
+
+
+def count_languages(repos):
+    language_counts = {}
+
+    for repo in repos:
+        language = repo["language"] or "Unknown"
+
+        if language in language_counts:
+            language_counts[language] += 1
+        else:
+            language_counts[language] = 1
+
+    return language_counts
+
+
+@app.route("/github/<username>")
+def github_summary(username):
     try:
-        response = requests.get(url, timeout=10)
+        response = get_github_repositories(username)
 
     except requests.exceptions.Timeout:
         return {
@@ -189,29 +224,23 @@ def github_summary(username):
         return {
             "message": "GitHub user not found"
         }, 404
+
     if response.status_code != 200:
-     return {
-        "message": "GitHub API request failed",
-        "status_code": response.status_code
-    }, 502
+        return {
+            "message": "GitHub API request failed",
+            "status_code": response.status_code
+        }, 502
 
     repos = response.json()
 
-    language_counts = {}
-
-    for repo in repos:
-        language = repo["language"] or "Unknown"
-
-        if language in language_counts:
-            language_counts[language] += 1
-        else:
-            language_counts[language] = 1
+    language_counts = count_languages(repos)
 
     return {
         "username": username,
         "total_repositories": len(repos),
         "languages": language_counts
     }
-   
+
+
 if __name__ == "__main__":
     app.run(debug=True)
