@@ -208,6 +208,7 @@ def count_languages(repos):
 @app.route("/github/<username>")
 def github_summary(username):
     language_filter = request.args.get("language")
+    sort_by = request.args.get("sort")
 
     try:
         response = get_github_repositories(username)
@@ -239,15 +240,31 @@ def github_summary(username):
         repo for repo in repos
         if (repo["language"] or "Unknown").lower() == language_filter.lower()
     ]
+     if sort_by == "name":
+      repos = sorted(repos, key=lambda repo: repo["name"].lower())
+      
+      if sort_by == "stars":
+       repos = sorted(
+        repos,
+        key=lambda repo: repo["stargazers_count"],
+        reverse=True
+    )
+
 
     language_counts = count_languages(repos)
 
     return {
-        "username": username,
-        "total_repositories": len(repos),
-        "languages": language_counts
+    "username": username,
+    "total_repositories": len(repos),
+    "languages": language_counts,
+   "repositories": [
+    {
+        "name": repo["name"],
+        "stars": repo["stargazers_count"]
     }
-
+    for repo in repos
+]
+}
 
 if __name__ == "__main__":
     app.run(debug=True)
