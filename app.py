@@ -207,6 +207,8 @@ def count_languages(repos):
 
 @app.route("/github/<username>")
 def github_summary(username):
+    language_filter = request.args.get("language")
+
     try:
         response = get_github_repositories(username)
 
@@ -232,6 +234,11 @@ def github_summary(username):
         }, 502
 
     repos = response.json()
+    if language_filter:
+     repos = [
+        repo for repo in repos
+        if (repo["language"] or "Unknown").lower() == language_filter.lower()
+    ]
 
     language_counts = count_languages(repos)
 
