@@ -184,12 +184,30 @@ def count_languages(repos):
 
 
 def get_github_repositories(username):
-    url = f"https://api.github.com/users/{username}/repos?per_page=100"
+    page = 1
+    all_repos = []
 
-    response = requests.get(url, timeout=10)
+    while True:
+        url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}"
 
-    return response
+        response = requests.get(url, timeout=10)
 
+        if response.status_code == 404:
+            return {"error": "GitHub user not found"}, 404
+
+        if response.status_code != 200:
+            return {"error": "GitHub API request failed"}, 502
+
+        repos = response.json()
+
+        if not repos:
+            break
+
+        all_repos.extend(repos)
+
+        page += 1
+
+        return all_repos
 
 def count_languages(repos):
     language_counts = {}
@@ -211,7 +229,9 @@ def github_summary(username):
     sort_by = request.args.get("sort")
 
     try:
-        response = get_github_repositories(username)
+        repos = get_github_repositories(username)
+        if isinstance(repos, tuple):
+          return repos
 
     except requests.exceptions.Timeout:
         return {
@@ -223,32 +243,25 @@ def github_summary(username):
             "message": "Could not connect to GitHub"
         }, 503
 
-    if response.status_code == 404:
-        return {
-            "message": "GitHub user not found"
-        }, 404
-
-    if response.status_code != 200:
-        return {
-            "message": "GitHub API request failed",
-            "status_code": response.status_code
-        }, 502
-
-    repos = response.json()
+   
     if language_filter:
-     repos = [
-        repo for repo in repos
-        if (repo["language"] or "Unknown").lower() == language_filter.lower()
-    ]
-     if sort_by == "name":
-      repos = sorted(repos, key=lambda repo: repo["name"].lower())
-      
-      if sort_by == "stars":
-       repos = sorted(
-        repos,
-        key=lambda repo: repo["stargazers_count"],
-        reverse=True
-    )
+        repos = [
+            repo for repo in repos
+            if (repo["language"] or "Unknown").lower() == language_filter.lower()
+        ]
+
+    if sort_by == "name":
+        repos = sorted(
+            repos,
+            key=lambda repo: repo["name"].lower()
+        )
+
+    if sort_by == "stars":
+        repos = sorted(
+            repos,
+            key=lambda repo: repo["stargazers_count"],
+            reverse=True
+        )
 
 
     language_counts = count_languages(repos)
