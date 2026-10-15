@@ -1,13 +1,18 @@
 from flask import Flask, request
 import sqlite3
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+github_token = os.getenv("GITHUB_TOKEN")
 
 app = Flask(__name__)
 
-
 @app.route("/")
 def home():
-    return "Customer API is running!"
+    app_name = os.getenv("APP_NAME")
+    return f"{app_name} is running!"
 
 
 @app.route("/customers")
@@ -189,8 +194,13 @@ def get_github_repositories(username):
 
     while True:
         url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}"
+        headers = {}
 
-        response = requests.get(url, timeout=10)
+        if github_token:
+            headers["Authorization"] = f"Bearer {github_token}"
+
+        response = requests.get(url, headers=headers, timeout=10)
+
 
         if response.status_code == 404:
             return {"error": "GitHub user not found"}, 404
