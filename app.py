@@ -3,27 +3,37 @@ import sqlite3
 import requests
 import os
 from dotenv import load_dotenv
+from github_service import count_languages, get_github_repositories
 
+# Load environment variables from .env
 load_dotenv()
-github_token = os.getenv("GITHUB_TOKEN")
 
 app = Flask(__name__)
 
+
+# -----------------------------------
+# HOME ROUTE
+# -----------------------------------
+
 @app.route("/")
 def home():
-    app_name = os.getenv("APP_NAME")
+    app_name = os.getenv("APP_NAME", "Customer API")
     return f"{app_name} is running!"
 
 
-@app.route("/customers")
+# -----------------------------------
+# GET ALL CUSTOMERS
+# -----------------------------------
+
+@app.route("/customers", methods=["GET"])
 def get_customers():
     connection = sqlite3.connect("business.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-    SELECT id, name, email, city
-    FROM customers
-    ORDER BY name
+        SELECT id, name, email, city
+        FROM customers
+        ORDER BY name
     """)
 
     customers = cursor.fetchall()
@@ -41,16 +51,20 @@ def get_customers():
 
     return customer_list
 
-@app.route("/customers/<int:customer_id>")
 
+# -----------------------------------
+# GET ONE CUSTOMER
+# -----------------------------------
+
+@app.route("/customers/<int:customer_id>", methods=["GET"])
 def get_customer(customer_id):
     connection = sqlite3.connect("business.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-    SELECT id, name, email, city
-    FROM customers
-    WHERE id = ?
+        SELECT id, name, email, city
+        FROM customers
+        WHERE id = ?
     """, (customer_id,))
 
     customer = cursor.fetchone()
@@ -63,209 +77,171 @@ def get_customer(customer_id):
             "email": customer[2],
             "city": customer[3]
         }
-    else:
-        return {
-            "message": "Customer not found"
-        }, 404
+
+    return {"message": "Customer not found"}, 404
+
+
+# -----------------------------------
+# ADD CUSTOMER
+# -----------------------------------
 
 @app.route("/customers", methods=["POST"])
 def add_customer():
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
-    # Validate the JSON data
-    if not data:
+    if not isinstance(data, dict):
         return {"message": "JSON data is required"}, 400
 
-    name = data.get("name", "").strip()
-    email = data.get("email", "").strip()
-    city = data.get("city", "").strip()
+    name = data.get("name", "")
+    email = data.get("email", "")
+    city = data.get("city", "")
 
-    if name == "":
+    if not all(isinstance(value, str) for value in (name, email, city)):
+        return {"message": "Name, email, and city must be strings"}, 400
+
+    name = name.strip()
+    email = email.strip()
+    city = city.strip()
+
+    if not name:
         return {"message": "Name is required"}, 400
 
-    if email == "":
+    if not email:
         return {"message": "Email is required"}, 400
 
-    if city == "":
+    if not city:
         return {"message": "City is required"}, 400
 
     connection = sqlite3.connect("business.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-    INSERT INTO customers (name, email, city)
-    VALUES (?, ?, ?)
+        INSERT INTO customers (name, email, city)
+        VALUES (?, ?, ?)
     """, (name, email, city))
 
     connection.commit()
     connection.close()
 
-    return {
-        "message": "Customer added successfully"
-    }, 201
+    return {"message": "Customer added successfully"}, 201
+
+
+# -----------------------------------
+# UPDATE CUSTOMER
+# -----------------------------------
+
 @app.route("/customers/<int:customer_id>", methods=["PUT"])
 def update_customer(customer_id):
-    data = request.get_json()
+    data = request.get_json(silent=True)
 
-    # Validate the JSON data
-    if not data:
+    if not isinstance(data, dict):
         return {"message": "JSON data is required"}, 400
 
-    name = data.get("name", "").strip()
-    email = data.get("email", "").strip()
-    city = data.get("city", "").strip()
+    name = data.get("name", "")
+    email = data.get("email", "")
+    city = data.get("city", "")
 
-    if name == "":
+    if not all(isinstance(value, str) for value in (name, email, city)):
+        return {"message": "Name, email, and city must be strings"}, 400
+
+    name = name.strip()
+    email = email.strip()
+    city = city.strip()
+
+    if not name:
         return {"message": "Name is required"}, 400
 
-    if email == "":
+    if not email:
         return {"message": "Email is required"}, 400
 
-    if city == "":
+    if not city:
         return {"message": "City is required"}, 400
 
     connection = sqlite3.connect("business.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-    UPDATE customers
-    SET name = ?, email = ?, city = ?
-    WHERE id = ?
+        UPDATE customers
+        SET name = ?, email = ?, city = ?
+        WHERE id = ?
     """, (name, email, city, customer_id))
 
     connection.commit()
-
-    if cursor.rowcount > 0:
-        connection.close()
-
-        return {
-            "message": "Customer updated successfully"
-        }
-
+    updated = cursor.rowcount
     connection.close()
 
-    return {
-        "message": "Customer not found"
-    }, 404
+    if updated > 0:
+        return {"message": "Customer updated successfully"}
+
+    return {"message": "Customer not found"}, 404
+
+
+# -----------------------------------
+# DELETE CUSTOMER
+# -----------------------------------
+
 @app.route("/customers/<int:customer_id>", methods=["DELETE"])
 def delete_customer(customer_id):
-
     connection = sqlite3.connect("business.db")
     cursor = connection.cursor()
 
     cursor.execute("""
-    DELETE FROM customers
-    WHERE id = ?
+        DELETE FROM customers
+        WHERE id = ?
     """, (customer_id,))
 
     connection.commit()
-
-    if cursor.rowcount > 0:
-        connection.close()
-
-        return {
-            "message": "Customer deleted successfully"
-        }
-
+    deleted = cursor.rowcount
     connection.close()
 
-    return {
-        "message": "Customer not found"
-    }, 404
+    if deleted > 0:
+        return {"message": "Customer deleted successfully"}
 
-def count_languages(repos):
-    language_counts = {}
-
-    for repo in repos:
-        language = repo["language"] or "Unknown"
-
-        if language in language_counts:
-            language_counts[language] += 1
-        else:
-            language_counts[language] = 1
-
-    return language_counts
+    return {"message": "Customer not found"}, 404
 
 
+# -----------------------------------
+# GITHUB REPOSITORY SUMMARY
+# -----------------------------------
 
-def get_github_repositories(username):
-    page = 1
-    all_repos = []
-
-    while True:
-        url = f"https://api.github.com/users/{username}/repos?per_page=100&page={page}"
-        headers = {}
-
-        if github_token:
-            headers["Authorization"] = f"Bearer {github_token}"
-
-        response = requests.get(url, headers=headers, timeout=10)
-
-
-        if response.status_code == 404:
-            return {"error": "GitHub user not found"}, 404
-
-        if response.status_code != 200:
-            return {"error": "GitHub API request failed"}, 502
-
-        repos = response.json()
-
-        if not repos:
-            break
-
-        all_repos.extend(repos)
-
-        page += 1
-
-        return all_repos
-
-def count_languages(repos):
-    language_counts = {}
-
-    for repo in repos:
-        language = repo["language"] or "Unknown"
-
-        if language in language_counts:
-            language_counts[language] += 1
-        else:
-            language_counts[language] = 1
-
-    return language_counts
-
-
-@app.route("/github/<username>")
+@app.route("/github/<username>", methods=["GET"])
 def github_summary(username):
     language_filter = request.args.get("language")
     sort_by = request.args.get("sort")
 
+    # Retrieve repositories from github_service.py
     try:
         repos = get_github_repositories(username)
-        if isinstance(repos, tuple):
-          return repos
 
     except requests.exceptions.Timeout:
-        return {
-            "message": "GitHub request timed out"
-        }, 504
+        return {"message": "GitHub request timed out"}, 504
 
     except requests.exceptions.ConnectionError:
-        return {
-            "message": "Could not connect to GitHub"
-        }, 503
+        return {"message": "Could not connect to GitHub"}, 503
 
-   
+    except requests.exceptions.RequestException:
+        return {"message": "GitHub request failed"}, 502
+
+    # Handle errors returned by github_service.py
+    if isinstance(repos, tuple):
+        return repos
+
+    # Filter by programming language
     if language_filter:
         repos = [
             repo for repo in repos
-            if (repo["language"] or "Unknown").lower() == language_filter.lower()
+            if (repo["language"] or "Unknown").lower()
+            == language_filter.lower()
         ]
 
+    # Sort alphabetically by repository name
     if sort_by == "name":
         repos = sorted(
             repos,
             key=lambda repo: repo["name"].lower()
         )
 
+    # Sort by stars, highest first
     if sort_by == "stars":
         repos = sorted(
             repos,
@@ -273,21 +249,27 @@ def github_summary(username):
             reverse=True
         )
 
-
+    # Count programming languages
     language_counts = count_languages(repos)
 
+    # Return JSON summary
     return {
-    "username": username,
-    "total_repositories": len(repos),
-    "languages": language_counts,
-   "repositories": [
-    {
-        "name": repo["name"],
-        "stars": repo["stargazers_count"]
+        "username": username,
+        "total_repositories": len(repos),
+        "languages": language_counts,
+        "repositories": [
+            {
+                "name": repo["name"],
+                "stars": repo["stargazers_count"]
+            }
+            for repo in repos
+        ]
     }
-    for repo in repos
-]
-}
+
+
+# -----------------------------------
+# START FLASK SERVER
+# -----------------------------------
 
 if __name__ == "__main__":
     app.run(debug=True)
