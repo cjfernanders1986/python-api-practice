@@ -1,31 +1,41 @@
 # Python API Practice
 
-My first Python project while refreshing my programming skills.
+A Python learning project that demonstrates database management, REST API development, and integration with external APIs.
 
-## What it does
+This project started as a way to refresh my Python programming skills and gradually expanded into a Customer Management System and a Flask REST API.
 
-- Connects to a public REST API
-- Retrieves JSON data
-- Processes user information
-- Searches users based on location
-- Displays user information
+## Project Features
 
-## Technologies
+- Customer Management System using Python and SQLite
+- Command-line interface for managing customers
+- Flask REST API with full CRUD operations
+- Integration with the GitHub REST API
+- GitHub repository filtering and sorting
+- GitHub API pagination
+- Repository statistics by programming language
+- Environment variable configuration using `.env`
+- HTTP error handling and input validation
+- Modular Python code organization
 
-- Python
+## Technologies Used
+
+- Python 3
+- Flask
+- SQLite
+- SQL
 - Requests
-- REST API
+- REST APIs
 - JSON
+- python-dotenv
 - Git
 - GitHub
+- Visual Studio Code
 
-# Customer Management System
+## Customer Management System
 
-A command-line Customer Management System built with Python and SQLite.
+A command-line application that stores customer information in a SQLite database.
 
-The application allows users to add, search, view, update, and delete customer records stored in a SQLite database.
-
-## Features
+### Features
 
 - Add new customers
 - Search customers by name
@@ -34,47 +44,41 @@ The application allows users to add, search, view, update, and delete customer r
 - Delete customers by ID
 - Confirm before deleting a customer
 - Validate user input
-- Store customer data using SQLite
+- Store customer records using SQLite
 
-## Technologies Used
-
-- Python
-- SQLite
-- SQL
-
-## What I Learned
+### What I Learned
 
 While building the Customer Management System, I practiced:
 
-- Connecting Python to a SQLite database
+- Connecting Python to SQLite databases
 - Creating database tables
 - Using SQL `INSERT`, `SELECT`, `UPDATE`, and `DELETE`
 - Writing parameterized SQL queries
-- Using Python loops and conditional statements
+- Working with Python loops and conditional statements
 - Validating user input
-- Handling database records by unique ID
-- Building a command-line menu
+- Managing records using unique IDs
+- Building command-line menus
 
-## How to Run
+### Run the Customer Management System
 
-1. Clone the repository.
-2. Open the project folder in VS Code.
-3. Make sure Python is installed.
-4. Run the program:
+```bash
+python database.py
+```
 
-## REST API
+## Flask REST API
 
-This project also includes a Flask REST API connected to the SQLite customer database.
+The project includes a Flask REST API connected to the SQLite customer database.
 
-### API Endpoints
+### Customer API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | /customers | Get all customers |
-| GET | /customers/<id> | Get one customer |
-| POST | /customers | Add a new customer |
-| PUT | /customers/<id> | Update a customer |
-| DELETE | /customers/<id> | Delete a customer |
+| GET | `/` | Check that the application is running |
+| GET | `/customers` | Retrieve all customers |
+| GET | `/customers/<id>` | Retrieve one customer by ID |
+| POST | `/customers` | Add a new customer |
+| PUT | `/customers/<id>` | Update an existing customer |
+| DELETE | `/customers/<id>` | Delete a customer |
 
 ### API Features
 
@@ -82,50 +86,398 @@ This project also includes a Flask REST API connected to the SQLite customer dat
 - SQLite database integration
 - Full CRUD operations
 - Input validation
-- 400 Bad Request responses for invalid data
-- 404 Not Found responses for missing customers
+- HTTP 400 responses for invalid requests
+- HTTP 404 responses for missing customers
 
-### Run the API
+### Example: Retrieve All Customers
 
-Install Flask:
+**Request:**
 
-```bash
-pip install flask
+```http
+GET /customers
+```
 
-The API runs locally at:
+**Example response:**
 
-http://127.0.0.1:5000
+```json
+[
+  {
+    "id": 4,
+    "name": "Alice Brown",
+    "email": "alice@example.com",
+    "city": "Hoboken"
+  },
+  {
+    "id": 5,
+    "name": "Bob Wilson",
+    "email": "bob@example.com",
+    "city": "Jersey City"
+  }
+]
+```
 
-## External API Practice
+### Example: Retrieve One Customer
 
-This project also includes Python scripts that practice consuming external REST APIs using the `requests` library.
+**Request:**
 
-### GitHub API
+```http
+GET /customers/4
+```
 
-The GitHub API scripts can:
+**Example response:**
 
-- Look up a GitHub user
-- Retrieve public repositories
-- Display repository names and languages
+```json
+{
+  "id": 4,
+  "name": "Alice Brown",
+  "email": "alice@example.com",
+  "city": "Hoboken"
+}
+```
+
+### Example: Customer Not Found
+
+**Request:**
+
+```http
+GET /customers/9999
+```
+
+**Response:**
+
+```json
+{
+  "message": "Customer not found"
+}
+```
+
+HTTP status: `404 Not Found`
+
+## GitHub REST API Integration
+
+The Flask application connects to the public GitHub REST API to retrieve and analyze repositories belonging to a GitHub user.
+
+### GitHub API Endpoint
+
+```http
+GET /github/<username>
+```
+
+Example:
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986
+```
+
+### GitHub API Features
+
+- Retrieve a GitHub user's public repositories
+- Retrieve multiple pages of repository results
+- Filter repositories by programming language
+- Sort repositories alphabetically by name
+- Sort repositories by number of stars
 - Count repositories by programming language
-- Handle 404 responses
+- Return repository names and star counts
+- Handle invalid GitHub usernames
 - Handle connection errors and timeouts
-- Process JSON responses
-- Use functions and return values
+- Support an optional GitHub API token
 
-### Other API Practice
+### Filter Repositories by Language
 
-Additional scripts demonstrate:
+Use the `language` query parameter:
 
-- Sending HTTP GET requests
-- Reading JSON responses
-- Working with nested JSON data
-- Checking HTTP status codes
-- Querying the REST Countries API
+```text
+http://127.0.0.1:5000/github/cjfernanders1986?language=Python
+```
 
-### Example
+This returns only repositories whose primary language is Python.
 
-Run the GitHub repository analyzer:
+Language filtering is case-insensitive.
+
+### Sort Repositories by Name
+
+Use the `sort=name` query parameter:
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986?sort=name
+```
+
+This returns repositories in alphabetical order.
+
+### Sort Repositories by Stars
+
+Use the `sort=stars` query parameter:
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986?sort=stars
+```
+
+This returns repositories with the most stars first.
+
+### Combine Filtering and Sorting
+
+You can combine query parameters:
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986?language=Python&sort=name
+```
+
+This returns Python repositories sorted alphabetically.
+
+### Example GitHub API Response
+
+```json
+{
+  "username": "exampleuser",
+  "total_repositories": 2,
+  "languages": {
+    "Python": 2
+  },
+  "repositories": [
+    {
+      "name": "project-one",
+      "stars": 5
+    },
+    {
+      "name": "project-two",
+      "stars": 2
+    }
+  ]
+}
+```
+
+The repository names and counts above are illustrative examples.
+
+### GitHub API Error Handling
+
+If a GitHub username does not exist, the API returns:
+
+```json
+{
+  "error": "GitHub user not found"
+}
+```
+
+HTTP status: `404 Not Found`
+
+The API also handles GitHub request failures, connection errors, and timeouts.
+
+## External API Practice Scripts
+
+This repository includes additional Python scripts for practicing external REST API requests.
+
+Examples include:
+
+- `external_api.py` — basic external API requests
+- `country_lookup.py` — REST Countries API practice
+- `github_lookup.py` — GitHub user lookup
+- `github_repos.py` — GitHub repository analysis
+
+These scripts demonstrate how to:
+
+- Send HTTP GET requests
+- Read JSON responses
+- Work with nested JSON data
+- Check HTTP status codes
+- Process API responses
+- Handle request errors
+
+## Project Structure
+
+```text
+python-api-practice/
+│
+├── app.py
+├── github_service.py
+├── database.py
+├── external_api.py
+├── country_lookup.py
+├── github_lookup.py
+├── github_repos.py
+├── env_test.py
+├── requirements.txt
+├── README.md
+├── .gitignore
+├── .env
+└── business.db
+```
+
+**Note:** The `.env` file and `business.db` database are local files excluded from Git tracking. They are not included when cloning the repository.
+
+### Code Organization
+
+- `app.py` contains the Flask routes and customer API operations.
+- `github_service.py` contains GitHub API requests, pagination, and language-counting functions.
+- `database.py` contains the command-line Customer Management System.
+
+Separating code into modules makes the project easier to understand and maintain.
+
+## Installation and Setup
+
+### 1. Clone the Repository
 
 ```bash
-python github_repos.py
+git clone https://github.com/cjfernanders1986/python-api-practice.git
+```
+
+Navigate into the project folder:
+
+```bash
+cd python-api-practice
+```
+
+### 2. Create a Virtual Environment
+
+On Windows:
+
+```powershell
+python -m venv .venv
+```
+
+Activate it in PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+### 3. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+This installs the required Python packages, including Flask, Requests, and python-dotenv.
+
+### 4. Configure Environment Variables
+
+Create a file named `.env` in the project folder.
+
+Add:
+
+```env
+APP_NAME=My Python Flask API
+GITHUB_TOKEN=
+```
+
+The GitHub token is optional for public repository requests.
+
+If you use a token, keep it private and never commit it to GitHub.
+
+### 5. Set Up the Customer Database
+
+The project uses a local SQLite database named `business.db`.
+
+Because the database is excluded from Git, you must create it locally.
+
+Run the Customer Management System:
+
+```bash
+python database.py
+```
+
+The program automatically creates the `business.db` file and the `customers` table if they do not already exist.
+
+You can use the menu to add customer records.
+
+Choose option `6` to exit the program.
+
+After initializing the database, you can start the Flask API using:
+
+```bash
+python app.py
+```
+
+### 6. Start the Flask Server
+
+```bash
+python app.py
+```
+
+The development server runs locally at:
+
+```text
+http://127.0.0.1:5000
+```
+
+Open this address in your browser to verify that the API is running.
+
+### 7. Test the API
+
+Customer endpoints:
+
+```text
+http://127.0.0.1:5000/customers
+```
+
+```text
+http://127.0.0.1:5000/customers/4
+```
+
+GitHub endpoints:
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986
+```
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986?language=Python
+```
+
+```text
+http://127.0.0.1:5000/github/cjfernanders1986?sort=stars
+```
+
+The customer IDs shown are examples and depend on the records in your local database.
+
+## Environment Variables and Security
+
+This project uses `python-dotenv` to load configuration values from a local `.env` file.
+
+The `.gitignore` file excludes:
+
+```gitignore
+.venv/
+business.db
+.env
+__pycache__/
+```
+
+This prevents local environments, database files, environment variables, and Python cache files from being accidentally committed.
+
+## What I Learned
+
+Through this project, I practiced:
+
+- Python functions, loops, and conditionals
+- SQLite database operations
+- SQL queries and parameterized statements
+- Flask application development
+- REST API design
+- CRUD operations
+- HTTP methods and status codes
+- JSON request and response handling
+- Consuming external REST APIs
+- API query parameters
+- Filtering and sorting data
+- API pagination
+- Handling errors and exceptions
+- Environment variables
+- Organizing Python code into modules
+- Managing dependencies
+- Git version control
+- Pushing projects to GitHub
+
+## Future Improvements
+
+Possible next steps include:
+
+- Automated API tests using pytest
+- Improved database initialization and migrations
+- Pagination for customer records
+- Additional customer search and filtering
+- API authentication
+- Deployment to a cloud hosting platform
+
+## Author
+
+Created by [cjfernanders1986](https://github.com/cjfernanders1986) as part of a hands-on Python learning journey.
